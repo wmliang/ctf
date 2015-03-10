@@ -1,91 +1,5 @@
 import sys
 
-def ROL(data, shift, size=32):
-    shift %= size
-    remains = data >> (size - shift)
-    body = (data << shift) - (remains << size )
-    return (body + remains)
-     
- 
-def ROR(data, shift, size=32):
-    shift %= size
-    body = data >> shift
-    remains = (data << (size - shift)) - (body << size)
-    return (body + remains)
-
-def wut_encode1(buf):
-    new = []
-    for k in range(len(buf)/16):
-        idx = k * 16
-        new0 = int("".join(buf[idx+0:idx+4][::-1]), 16)
-        new4 = int("".join(buf[idx+4:idx+8][::-1]), 16)
-        new8 = int("".join(buf[idx+8:idx+0xc][::-1]), 16)
-        newc = int("".join(buf[idx+0xc:idx+0x10][::-1]), 16)
-        v = ROR(((~new4 & 0xFFFFFFFF) & newc) | (new8 & new4), 0x19) ^ new0
-        v = (v + new4) & 0xFFFFFFFF
-        line = format(v, 'x').zfill(8)
-        line = [line[i:i+2] for i in range(0, len(line), 2)][::-1]
-        new += buf[idx+0xc:idx+0x10] + line + buf[idx+4:idx+8] + buf[idx+8:idx+0xc]
-    return new
-
-def wut_encode2(buf):
-    new = []
-    for k in range(len(buf)/16):
-        idx = k * 16
-        new0 = int("".join(buf[idx+0:idx+4][::-1]), 16)
-        new4 = int("".join(buf[idx+4:idx+8][::-1]), 16)
-        new8 = int("".join(buf[idx+8:idx+0xc][::-1]), 16)
-        newc = int("".join(buf[idx+0xc:idx+0x10][::-1]), 16)
-        v = ROR(((~newc & 0xFFFFFFFF) & new8) | (new4 & newc), 0x19) ^ new0
-        v = (v + new4) & 0xFFFFFFFF
-        line = format(v, 'x').zfill(8)
-        line = [line[i:i+2] for i in range(0, len(line), 2)][::-1]
-        new += buf[idx+0xc:idx+0x10] + line + buf[idx+4:idx+8] + buf[idx+8:idx+0xc]
-    return new
-
-def wut_encode3(buf):
-    new = []
-    for k in range(len(buf)/16):
-        idx = k * 16
-        new0 = int("".join(buf[idx+0:idx+4][::-1]), 16)
-        new4 = int("".join(buf[idx+4:idx+8][::-1]), 16)
-        new8 = int("".join(buf[idx+8:idx+0xc][::-1]), 16)
-        newc = int("".join(buf[idx+0xc:idx+0x10][::-1]), 16)
-        v = ROR((new4 ^ new8) ^ newc, 0x19) ^ new0
-        v = (v + new4) & 0xFFFFFFFF
-        line = format(v, 'x').zfill(8)
-        line = [line[i:i+2] for i in range(0, len(line), 2)][::-1]
-        new += buf[idx+0xc:idx+0x10] + line + buf[idx+4:idx+8] + buf[idx+8:idx+0xc]
-    return new
-
-def wut_encode4(buf):
-    new = []
-    for k in range(len(buf)/16):
-        idx = k * 16
-        new0 = int("".join(buf[idx+0:idx+4][::-1]), 16)
-        new4 = int("".join(buf[idx+4:idx+8][::-1]), 16)
-        new8 = int("".join(buf[idx+8:idx+0xc][::-1]), 16)
-        newc = int("".join(buf[idx+0xc:idx+0x10][::-1]), 16)
-        v = ROR(((~newc & 0xFFFFFFFF) | new4) ^ new8, 0x19) ^ new0
-        v = (v + new4) & 0xFFFFFFFF
-        line = format(v, 'x').zfill(8)
-        line = [line[i:i+2] for i in range(0, len(line), 2)][::-1]
-        new += buf[idx+0xc:idx+0x10] + line + buf[idx+4:idx+8] + buf[idx+8:idx+0xc]
-    return new
-
-def rearrange(arr):
-    c = int(pow(len(arr), 0.5)) - 1
-    buf = []
-    for j in range(c+1):
-        idx = c - j
-        for i in range((len(arr)/c)-1):
-            try:
-                buf.append(arr[idx])
-            except:
-                print "error, idx = " + hex(idx)
-            idx = idx + (c+1)
-    return buf
-
 def dump(buf):
     n = 0
     for i in buf:
@@ -95,44 +9,7 @@ def dump(buf):
         n = n + 1
     sys.stdout.write("\n")
 
-
-# encode
-input = "p"*256
-
-buf = []
-for i in range((len(input)/16)*16):
-    buf.append("00")
-i = 0
-for j in input:
-    buf[i] = j.encode('hex')
-    i = i + 1
-
-for i in range(128):
-    dump(buf)
-    j = i & 0x3F
-    if j > 0x1F:
-        if (i & 0x1F) < 0x10:
-            print "encode3"
-            buf = rearrange(wut_encode3(buf))
-        else:
-            print "encode4"
-            buf = rearrange(wut_encode4(buf))
-    else:
-        if (i & 0x1F) < 0x10:
-            print "encode1"
-            buf = rearrange(wut_encode1(buf))
-        else:
-            print "encode2"
-            buf = rearrange(wut_encode2(buf))
-dump(buf)
-
-
-
-# decode
-print "Decoding ..."
-
 def wut_decode1(buf):
-#    print "before wut_decode1" ; dump(buf)
     new = []
     for k in range(len(buf)/16):
         idx = k * 16
