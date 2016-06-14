@@ -7,3 +7,8 @@
 
 	rhinoxorus
 	memeshop
+
+# defcon ctf quals 2016 #
+
+	amadhj
+
